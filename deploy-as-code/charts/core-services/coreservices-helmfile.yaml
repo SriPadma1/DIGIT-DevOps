@@ -2,7 +2,7 @@ templates:
   default: &default
     chart: ./{{`{{ .Release.Name }}`}}
     version: 0.1.0
-    namespace: egov
+    namespace: core-test
     # This prevents helmfile exiting when it encounters a missing file
     # Valid values are "Error", "Warn", "Info", "Debug". The default is "Error"
     # Use "Debug" to make missing files errors invisible at the default log level(--log-level=INFO)
@@ -21,111 +21,111 @@ releases:
     <<: *default
 
   - name: egov-enc-service # Replace with your desired namespace
-    installed: true
+    installed: false
     needs:
     - egov-mdms-service
     <<: *default
 
   - name: egov-filestore # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-idgen # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-localization # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-location # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-mdms-service # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-hrms # Replace with your desired namespace
-    installed: true
+    installed: false
     needs:
     - egov-user
     <<: *default
 
   - name: egov-indexer # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-notification-mail # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-notification-sms # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-user # Replace with your desired namespace
-    installed: true
+    installed: false
     needs:
     - egov-enc-service
     <<: *default
 
   - name: egov-otp # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
   
   - name: egov-persister # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-url-shortening # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-workflow-v2 # Replace with your desired namespace
-    installed: true
+    installed: false
     needs:
     - egov-mdms-service
     <<: *default
 
   - name: user-otp # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: configmaps # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: citizen # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: digit-ui # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: employee # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: service-request # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: pgr-services # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
   
   - name: gateway # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
   - name: egov-pg-service # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
   
   - name: egov-user-event # Replace with your desired namespace
-    installed: true
+    installed: false
     <<: *default
 
 
