@@ -136,7 +136,7 @@ jobs:
 
   CoreServices-Deployment:
     needs: [check-core-services-changed-files]
-    if: ${{ needs.check-core-services-changed-files.env.Core-changed-files == 'true' }}
+    # if: ${{ needs.check-core-services-changed-files.env.Core-changed-files == 'true' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -147,6 +147,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name : check core-services
+        run: |
+          echo "${{ needs.check-core-services-changed-files.env.Core-changed-files }}"
       - name: Download deploy-as-code folder from artifacts
         uses: actions/download-artifact@v2
         with:
