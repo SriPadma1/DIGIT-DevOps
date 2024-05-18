@@ -1,5 +1,5 @@
 
-name: elasticsearch-data
+name: elasticsearch-data 
 replicas: 3
 
 image:
