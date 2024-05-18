@@ -8,14 +8,14 @@ jobs:
   check-core-services-changed-files:
     runs-on: ubuntu-latest
     outputs:
-      core-services-code-changed: ${{ steps.check_files.outputs.core-services-code-changed }}
+      core-services-code-changed: ${{ steps.check-coreservices-files.outputs.core-services-code-changed }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
     
     - name: Check for changes in core-services folder
-      id: check_coreservices_files
+      id: check-coreservices-files
       uses: tj-actions/changed-files@v42
       with:
         files: |
