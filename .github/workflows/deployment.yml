@@ -131,9 +131,7 @@ jobs:
           helmfile --version        
       - name: backbone-services deployment
         run: |
-          pwd
-          ls
-          helmfile -f backbone-services-helmfile.yaml apply --include-needs=true
+          helmfile -f backboneservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
 
   CoreServices-Deployment:
