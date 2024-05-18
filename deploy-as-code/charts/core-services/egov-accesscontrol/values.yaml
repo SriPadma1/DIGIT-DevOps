@@ -16,7 +16,7 @@ initContainers: {}
 image:
   repository: "egov-accesscontrol"
   tag: core-2.9-lts-mvn-check-34362a8b87-9
-replicas: "1"
+replicas: "2"
 healthChecks:
   enabled: true
   livenessProbePath: "/access/health"
