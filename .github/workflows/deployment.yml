@@ -19,7 +19,7 @@ jobs:
       uses: tj-actions/changed-files@v42
       with:
         files: |
-          deploy-as-code/helm/core-services/**
+          deploy-as-code/charts/core-services/**
 
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
       uses: tj-actions/changed-files@v42
       with:
         files: |
-          deploy-as-code/helm/backbone-services/**
+          deploy-as-code/charts/backbone-services/**
              
 
   BackboneServices-Deployment:
