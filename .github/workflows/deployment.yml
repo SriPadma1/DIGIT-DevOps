@@ -7,7 +7,8 @@ on:
 jobs:
   check-core-services-changed-files:
     runs-on: ubuntu-latest
-
+    outputs:
+      core-files-changed: ${{ steps.changed-corefiles.outputs.CORE_CHANGED_FILES }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -20,6 +21,7 @@ jobs:
           deploy-as-code/charts/core-services/**
 
     - name: List all changed files
+      id: changed-corefiles
       env:
         Core-changed-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
         ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
@@ -27,7 +29,7 @@ jobs:
         for file in ${ALL_CHANGED_FILES}; do
           echo "$file was changed"
         done
-        echo "${Core-change-files}"
+        echo "CORE_CHANGED_FILES=${Core-changed-files}" >> $GITHUB_OUTPUT
     
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
@@ -134,7 +136,7 @@ jobs:
 
   CoreServices-Deployment:
     needs: check-core-services-changed-files
-    if: ${{ needs.check-core-services-changed-files.env.Core-changed-files == 'true' }}
+    if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed == 'true' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
