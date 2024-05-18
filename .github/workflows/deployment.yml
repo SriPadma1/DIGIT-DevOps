@@ -23,11 +23,13 @@ jobs:
 
     - name: List all changed files
       env:
+        Core-change-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
         ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
       run: |
         for file in ${ALL_CHANGED_FILES}; do
           echo "$file was changed"
         done
+        echo "${Core-change-files}"
 
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
