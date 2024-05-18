@@ -5,7 +5,7 @@ replicas: 3
 image:
   pullPolicy: IfNotPresent  
   repository: docker.elastic.co/elasticsearch/elasticsearch
-  tag: 8.11.3
+  tag: 8.11.3 
 
 clusterName: "elasticsearch"
 nodeGroup: "data"
