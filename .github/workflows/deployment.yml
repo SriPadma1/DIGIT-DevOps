@@ -8,7 +8,7 @@ jobs:
   check-core-services-changed-files:
     runs-on: ubuntu-latest
     outputs:
-      core-services-code-changed: ${{ steps.check-coreservices-files.outputs.core-services-code-changed }}
+      core-services-code-changed: ${{ steps.check-coreservices-files.outputs.any_changed }}
 
     steps:
     - name: Checkout repository
@@ -24,7 +24,7 @@ jobs:
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
     outputs:
-      backbone-services-code-changed: ${{ steps.check_backboneservices_files.outputs.backbone-services-code-changed }}
+      backbone-services-code-changed: ${{ steps.check_backboneservices_files.outputs.any_changed }}
 
     steps:
     - name: Checkout repository
