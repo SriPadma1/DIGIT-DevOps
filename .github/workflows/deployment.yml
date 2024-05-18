@@ -30,7 +30,7 @@ jobs:
         echo "${Core-change-files}"
     
     Core-Services-Deployment:
-      if: ${{ needs.check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
+      if: ${{ steps.check-coreservices-files.outputs.any_changed == 'true' }}
       runs-on: ubuntu-latest
       env:
         TF_IN_AUTOMATION: "true"
