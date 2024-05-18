@@ -135,7 +135,7 @@ jobs:
         working-directory: deploy-as-code/charts/backbone-services
 
   CoreServices-Deployment:
-    needs: check-core-services-changed-files
+    needs: [check-core-services-changed-files]
     if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed == 'true' }}
     runs-on: ubuntu-latest
     env:
