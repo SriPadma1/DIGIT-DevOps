@@ -136,7 +136,7 @@ jobs:
 
   CoreServices-Deployment:
     needs: [check-core-services-changed-files]
-    if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed == 'true' }}
+    if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
