@@ -21,7 +21,6 @@ jobs:
           deploy-as-code/charts/core-services/**
 
     - name: List all changed files
-      id: changed-corefiles
       env:
         Core-changed-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
         ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
@@ -29,12 +28,11 @@ jobs:
         for file in ${ALL_CHANGED_FILES}; do
           echo "$file was changed"
         done
-        echo "CORE_CHANGED_FILES=${Core-changed-files}" >> $GITHUB_OUTPUT
     
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
     outputs:
-      backbone-services-code-changed: ${{ steps.check_backboneservices_files.outputs.any_changed }}
+      backbone-files-changed: ${{ steps.check_backboneservices_files.outputs.any_changed }}
 
     steps:
     - name: Checkout repository
@@ -46,10 +44,20 @@ jobs:
       with:
         files: |
           deploy-as-code/charts/backbone-services/**
+
+    - name: List all changed files
+      env:
+        Core-changed-files: ${{ steps.check_backboneservices_files.outputs.any_changed }}
+        ALL_CHANGED_FILES: ${{ steps.check_backboneservices_files.outputs.all_changed_files }}
+      run: |
+        for file in ${ALL_CHANGED_FILES}; do
+          echo "$file was changed"
+        done
              
 
   BackboneServices-Deployment:
-    if: ${{ needs.check-backbone-services-changed-files.outputs.backbone-services-code-changed == 'true' }}
+    needs: [check-backbone-services-changed-files]
+    if: ${{ needs.check-backbone-services-changed-files.outputs.backbone-files-changed == 'true' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -60,6 +68,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Archive deploy-as-code folder
+        run: tar -czf deploy-as-code.tar.gz deploy-as-code/
+      - name: Upload deploy-as-code folder as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: deploy-as-code.tar.gz 
       - name: Download deploy-as-code folder from artifacts
         uses: actions/download-artifact@v2
         with:
@@ -150,6 +165,13 @@ jobs:
       - name : check core-services
         run: |
           echo "${{ needs.check-core-services-changed-files.outputs.core-files-changed }}"
+      - name: Archive deploy-as-code folder
+        run: tar -czf deploy-as-code.tar.gz deploy-as-code/
+      - name: Upload deploy-as-code folder as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: deploy-as-code.tar.gz
       - name: Download deploy-as-code folder from artifacts
         uses: actions/download-artifact@v2
         with:
