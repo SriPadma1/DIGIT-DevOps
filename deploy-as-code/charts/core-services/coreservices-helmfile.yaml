@@ -83,7 +83,7 @@ releases:
     <<: *default
 
   - name: egov-workflow-v2 # Replace with your desired namespace
-    installed: false
+    installed: true
     needs:
     - egov-mdms-service
     <<: *default
