@@ -90,7 +90,7 @@ jobs:
           aws-iam-authenticator version  
       - name: Generate kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name $CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Verfiy kubectl get nodes
         run: |
@@ -173,7 +173,7 @@ jobs:
           aws-iam-authenticator version  
       - name: Generate kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name $CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Verfiy kubectl get nodes
         run: |
