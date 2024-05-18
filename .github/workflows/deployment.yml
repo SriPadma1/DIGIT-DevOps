@@ -5,10 +5,8 @@ on:
     branches:
       - DIGIT-2.9LTS   
 jobs:
-  check-core-services-changed-files:
+  check-core-services-:
     runs-on: ubuntu-latest
-    outputs:
-      core-services-code-changed: ${{ steps.check-coreservices-files.outputs.any_changed }}
 
     steps:
     - name: Checkout repository
@@ -21,7 +19,7 @@ jobs:
         files: |
           deploy-as-code/charts/core-services/**
 
-    - name: List all changed files
+    - name: List all CoreServices changed files
       env:
         Core-change-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
         ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
@@ -30,7 +28,92 @@ jobs:
           echo "$file was changed"
         done
         echo "${Core-change-files}"
-        echo "${outputs.core-services-code-changed}"
+    
+    Core-Services-Deployment:
+      if: ${{ needs.check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
+      runs-on: ubuntu-latest
+      env:
+        TF_IN_AUTOMATION: "true"
+        AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
+        AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Download deploy-as-code folder from artifacts
+          uses: actions/download-artifact@v2
+          with:
+            name: deploy-as-code-artifact
+            path: .
+        - name: Extract deploy-as-code folder
+          run: tar -xzf deploy-as-code.tar.gz 
+        - name: Convert YAML to ENV
+          uses: dcarbone/yaml-to-env-action@main
+          with:
+            yaml-file: infra-as-code/terraform/sample-aws/input.yaml
+            debug: true # Optional: set to true to output some debug information
+        # Now, use the env vars in subsequent steps 
+        - name: Install dependencies
+          run: sudo apt-get install -y jq
+        - name: Convert YAML to JSON
+          run: |
+            cat deploy-as-code/charts/environments/env-secrets.yaml | yq e -j - > secrets.json
+        - name: Extract flywayPassword
+          id: extract
+          run: |
+            db_password=$(jq -r '.secrets.db.password' secrets.json)
+            echo "db_password=$db_password" >> $GITHUB_ENV                 
+        - name: Install AWS IAM Authenticator
+          run: |
+            curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+            chmod +x ./aws-iam-authenticator
+            sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+            aws-iam-authenticator version  
+        - name: Generate kubeconfig
+          run: |
+            aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name $CLUSTER_NAME
+            cat ~/.kube/config > kubeconfig  
+        - name: Verfiy kubectl get nodes
+          run: |
+            kubectl get nodes  
+          env:
+            AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
+            AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}  
+        # - name: Install sops
+        #   run: |
+        #     sudo apt update
+        #     sudo apt install -y gnupg
+        #     wget https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux
+        #     chmod +x sops-v3.7.1.linux
+        #     sudo mv sops-v3.7.1.linux /usr/local/bin/sops
+        # - name: Set up Helm
+        #   uses: azure/setup-helm@v1
+        #   with:
+        #     version: 'latest' # Specify the version of Helm
+
+        - name: Install Helmfile
+          run: |
+            HELMFILE_VERSION="v0.140.0"
+
+              # Download Helmfile
+            curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+
+              # Make the Helmfile binary executable
+            chmod +x helmfile
+
+              # Move Helmfile to a location in your PATH
+            sudo mv helmfile /usr/local/bin/helmfile
+
+            helm plugin install https://github.com/databus23/helm-diff
+
+              # Verify installation
+            helmfile --version        
+        - name: core-services deployment
+          run: helmfile -f coreservices-helmfile.yaml apply --include-needs=true
+          working-directory: deploy-as-code/charts/core-services
 
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
@@ -135,91 +218,91 @@ jobs:
         run: helmfile -f coreservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
 
-  CoreServices-Deployment:
-    if: ${{ needs.check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
-    runs-on: ubuntu-latest
-    env:
-      TF_IN_AUTOMATION: "true"
-      AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-      AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Download deploy-as-code folder from artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: deploy-as-code-artifact
-          path: .
-      - name: Extract deploy-as-code folder
-        run: tar -xzf deploy-as-code.tar.gz 
-      - name: Convert YAML to ENV
-        uses: dcarbone/yaml-to-env-action@main
-        with:
-          yaml-file: infra-as-code/terraform/sample-aws/input.yaml
-          debug: true # Optional: set to true to output some debug information
-      # Now, use the env vars in subsequent steps 
-      - name: Install dependencies
-        run: sudo apt-get install -y jq
-      - name: Convert YAML to JSON
-        run: |
-          cat deploy-as-code/charts/environments/env-secrets.yaml | yq e -j - > secrets.json
-      - name: Extract flywayPassword
-        id: extract
-        run: |
-          db_password=$(jq -r '.secrets.db.password' secrets.json)
-          echo "db_password=$db_password" >> $GITHUB_ENV                 
-      - name: Install AWS IAM Authenticator
-        run: |
-          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
-          chmod +x ./aws-iam-authenticator
-          sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
-          aws-iam-authenticator version  
-      - name: Generate kubeconfig
-        run: |
-          aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name $CLUSTER_NAME
-          cat ~/.kube/config > kubeconfig  
-      - name: Verfiy kubectl get nodes
-        run: |
-          kubectl get nodes  
-        env:
-          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-          AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}  
-      # - name: Install sops
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install -y gnupg
-      #     wget https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux
-      #     chmod +x sops-v3.7.1.linux
-      #     sudo mv sops-v3.7.1.linux /usr/local/bin/sops
-      # - name: Set up Helm
-      #   uses: azure/setup-helm@v1
-      #   with:
-      #     version: 'latest' # Specify the version of Helm
+  # CoreServices-Deployment:
+  #   if: ${{ needs.check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     TF_IN_AUTOMATION: "true"
+  #     AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
+  #     AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
+  #     AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
+  #     AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Download deploy-as-code folder from artifacts
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: deploy-as-code-artifact
+  #         path: .
+  #     - name: Extract deploy-as-code folder
+  #       run: tar -xzf deploy-as-code.tar.gz 
+  #     - name: Convert YAML to ENV
+  #       uses: dcarbone/yaml-to-env-action@main
+  #       with:
+  #         yaml-file: infra-as-code/terraform/sample-aws/input.yaml
+  #         debug: true # Optional: set to true to output some debug information
+  #     # Now, use the env vars in subsequent steps 
+  #     - name: Install dependencies
+  #       run: sudo apt-get install -y jq
+  #     - name: Convert YAML to JSON
+  #       run: |
+  #         cat deploy-as-code/charts/environments/env-secrets.yaml | yq e -j - > secrets.json
+  #     - name: Extract flywayPassword
+  #       id: extract
+  #       run: |
+  #         db_password=$(jq -r '.secrets.db.password' secrets.json)
+  #         echo "db_password=$db_password" >> $GITHUB_ENV                 
+  #     - name: Install AWS IAM Authenticator
+  #       run: |
+  #         curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+  #         chmod +x ./aws-iam-authenticator
+  #         sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+  #         aws-iam-authenticator version  
+  #     - name: Generate kubeconfig
+  #       run: |
+  #         aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name $CLUSTER_NAME
+  #         cat ~/.kube/config > kubeconfig  
+  #     - name: Verfiy kubectl get nodes
+  #       run: |
+  #         kubectl get nodes  
+  #       env:
+  #         AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
+  #         AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
+  #         AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}  
+  #     # - name: Install sops
+  #     #   run: |
+  #     #     sudo apt update
+  #     #     sudo apt install -y gnupg
+  #     #     wget https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux
+  #     #     chmod +x sops-v3.7.1.linux
+  #     #     sudo mv sops-v3.7.1.linux /usr/local/bin/sops
+  #     # - name: Set up Helm
+  #     #   uses: azure/setup-helm@v1
+  #     #   with:
+  #     #     version: 'latest' # Specify the version of Helm
 
-      - name: Install Helmfile
-        run: |
-          HELMFILE_VERSION="v0.140.0"
+  #     - name: Install Helmfile
+  #       run: |
+  #         HELMFILE_VERSION="v0.140.0"
 
-            # Download Helmfile
-          curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+  #           # Download Helmfile
+  #         curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
 
-            # Make the Helmfile binary executable
-          chmod +x helmfile
+  #           # Make the Helmfile binary executable
+  #         chmod +x helmfile
 
-            # Move Helmfile to a location in your PATH
-          sudo mv helmfile /usr/local/bin/helmfile
+  #           # Move Helmfile to a location in your PATH
+  #         sudo mv helmfile /usr/local/bin/helmfile
 
-          helm plugin install https://github.com/databus23/helm-diff
+  #         helm plugin install https://github.com/databus23/helm-diff
 
-            # Verify installation
-          helmfile --version        
-      - name: core-services deployment
-        run: helmfile -f coreservices-helmfile.yaml apply --include-needs=true
-        working-directory: deploy-as-code/charts/core-services
+  #           # Verify installation
+  #         helmfile --version        
+  #     - name: core-services deployment
+  #       run: helmfile -f coreservices-helmfile.yaml apply --include-needs=true
+  #       working-directory: deploy-as-code/charts/core-services
   
   # DIGIT-only-deployment:
   #   if: ${{ needs.check-changed-files.outputs.deploy-as-code-changed == 'true' }}
