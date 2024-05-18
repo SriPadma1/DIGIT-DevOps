@@ -81,23 +81,7 @@ jobs:
           name: deploy-as-code-artifact
           path: .
       - name: Extract deploy-as-code folder
-        run: tar -xzf deploy-as-code.tar.gz 
-      - name: Convert YAML to ENV
-        uses: dcarbone/yaml-to-env-action@main
-        with:
-          yaml-file: infra-as-code/terraform/sample-aws/input.yaml
-          debug: true # Optional: set to true to output some debug information
-      # Now, use the env vars in subsequent steps 
-      - name: Install dependencies
-        run: sudo apt-get install -y jq
-      - name: Convert YAML to JSON
-        run: |
-          cat deploy-as-code/charts/environments/env-secrets.yaml | yq e -j - > secrets.json
-      - name: Extract flywayPassword
-        id: extract
-        run: |
-          db_password=$(jq -r '.secrets.db.password' secrets.json)
-          echo "db_password=$db_password" >> $GITHUB_ENV                 
+        run: tar -xzf deploy-as-code.tar.gz                
       - name: Install AWS IAM Authenticator
         run: |
           curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
@@ -179,22 +163,8 @@ jobs:
           path: .
       - name: Extract deploy-as-code folder
         run: tar -xzf deploy-as-code.tar.gz 
-      - name: Convert YAML to ENV
-        uses: dcarbone/yaml-to-env-action@main
-        with:
-          yaml-file: infra-as-code/terraform/sample-aws/input.yaml
-          debug: true # Optional: set to true to output some debug information
-      # Now, use the env vars in subsequent steps 
       - name: Install dependencies
-        run: sudo apt-get install -y jq
-      - name: Convert YAML to JSON
-        run: |
-          cat deploy-as-code/charts/environments/env-secrets.yaml | yq e -j - > secrets.json
-      - name: Extract flywayPassword
-        id: extract
-        run: |
-          db_password=$(jq -r '.secrets.db.password' secrets.json)
-          echo "db_password=$db_password" >> $GITHUB_ENV                 
+        run: sudo apt-get install -y jq                 
       - name: Install AWS IAM Authenticator
         run: |
           curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
