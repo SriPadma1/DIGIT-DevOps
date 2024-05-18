@@ -30,6 +30,7 @@ jobs:
           echo "$file was changed"
         done
         echo "${Core-change-files}"
+        echo "${outputs.core-services-code-changed}"
 
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
@@ -135,7 +136,7 @@ jobs:
         working-directory: deploy-as-code/charts/backbone-services
 
   CoreServices-Deployment:
-    if: ${{ check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
+    if: ${{ needs.check-core-services-changed-files.steps.check-coreservices-files.outputs.any_changed == 'true' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
