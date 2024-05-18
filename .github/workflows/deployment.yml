@@ -21,7 +21,7 @@ jobs:
 
     - name: List all changed files
       env:
-        Core-change-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
+        Core-changed-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
         ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
       run: |
         for file in ${ALL_CHANGED_FILES}; do
@@ -29,11 +29,6 @@ jobs:
         done
         echo "${Core-change-files}"
     
-    - name: Set output if core services changed
-      id: set-output
-      run: echo "::set-output name=core-services-changed::${{ steps.check-coreservices-files.outputs.any_changed }}"
-
-
   check-backbone-services-changed-files:
     runs-on: ubuntu-latest
     outputs:
@@ -139,7 +134,7 @@ jobs:
 
   CoreServices-Deployment:
     needs: check-core-services-changed-files
-    if: needs.check-core-services-changed-files.outputs.core-services-changed == 'true'
+    if: ${{ needs.check-core-services-changed-files.env.Core-changed-files == 'true' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
