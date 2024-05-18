@@ -1,7 +1,7 @@
 # Common Labels
 labels:
   app: "egov-accesscontrol"      
-  group: "core"  
+  group: "core"   
 
 # Ingress Configs
 ingress:
