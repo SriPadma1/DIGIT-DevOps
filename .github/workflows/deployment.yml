@@ -61,10 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
-      AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-      AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}
+      AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+      AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -90,16 +90,16 @@ jobs:
           aws-iam-authenticator version  
       - name: Generate kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name digit-lts
+          aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Verfiy kubectl get nodes
         run: |
           kubectl get nodes  
         env:
-          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-          AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}  
+          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }}  
       # - name: Install sops
       #   run: |
       #     sudo apt update
@@ -139,10 +139,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
-      AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-      AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}
+      AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+      AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -173,16 +173,16 @@ jobs:
           aws-iam-authenticator version  
       - name: Generate kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.DIGIT-LTS_REGION }} --name digit-lts
+          aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Verfiy kubectl get nodes
         run: |
           kubectl get nodes  
         env:
-          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT-LTS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT-LTS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT-LTS_DEFAULT_REGION }}
-          AWS_REGION:  ${{ secrets.DIGIT-LTS_REGION }}  
+          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }}  
       # - name: Install sops
       #   run: |
       #     sudo apt update
