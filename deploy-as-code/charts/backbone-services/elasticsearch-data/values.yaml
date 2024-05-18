@@ -2,7 +2,7 @@ name: elasticsearch-data
 replicas: 3 
 
 image:
-  pullPolicy: IfNotPresent  
+  pullPolicy: IfNotPresent   
   repository: docker.elastic.co/elasticsearch/elasticsearch
   tag: 8.11.3 
 
