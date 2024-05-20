@@ -22,7 +22,7 @@ initContainers:
 image:
   repository: "audit-service"
   tag: core-2.9-lts-mvn-check-c33cfe45ab-9
-replicas: "1"
+replicas: "2"
 healthChecks:
   enabled: true
   livenessProbePath: "/audit-service/health"
