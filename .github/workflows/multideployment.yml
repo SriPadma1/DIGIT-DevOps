@@ -1,0 +1,268 @@
+name: MultiDeployment workflow
+# Workflow branch creating cluster against the input.yaml file  
+on:
+  push:
+    branches:
+      - 'DIGIT-2.9LTS' 
+      - 'master'  
+  workflow_dispatch:
+    inputs:
+      Environment:
+        description: 'Select the Environment you want to deploy'
+        required: true
+        type: choice
+        options:
+          - digit-lts
+          - unified-uat
+jobs:
+  check-core-services-changed-files:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      core-files-changed: ${{ steps.check-coreservices-files.outputs.any_changed }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Check for changes in core-services folder
+      id: check-coreservices-files
+      uses: tj-actions/changed-files@v42
+      with:
+        files: |
+          deploy-as-code/charts/core-services/**
+
+    - name: List all changed files
+      env:
+        Core-changed-files: ${{ steps.check-coreservices-files.outputs.any_changed }}
+        ALL_CHANGED_FILES: ${{ steps.check-coreservices-files.outputs.all_changed_files }}
+      run: |
+        for file in ${ALL_CHANGED_FILES}; do
+          echo "$file was changed"
+        done
+    
+  check-backbone-services-changed-files:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      backbone-files-changed: ${{ steps.check_backboneservices_files.outputs.any_changed }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Check for changes in core-services folder
+      id: check_backboneservices_files
+      uses: tj-actions/changed-files@v42
+      with:
+        files: |
+          deploy-as-code/charts/backbone-services/**
+
+    - name: List all changed files
+      env:
+        Core-changed-files: ${{ steps.check_backboneservices_files.outputs.any_changed }}
+        ALL_CHANGED_FILES: ${{ steps.check_backboneservices_files.outputs.all_changed_files }}
+      run: |
+        for file in ${ALL_CHANGED_FILES}; do
+          echo "$file was changed"
+        done
+             
+
+  BackboneServices-Deployment:
+    needs: [check-backbone-services-changed-files]
+    if: ${{ needs.check-backbone-services-changed-files.outputs.backbone-files-changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment variables for digit-lts
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
+      - name: Set environment variables for unified-uat
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ secrets.UNIFIED_UAT_DEFAULT_REGION }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.UNIFIED_UAT_REGION }}" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Archive deploy-as-code folder
+        run: tar -czf deploy-as-code.tar.gz deploy-as-code/
+      - name: Upload deploy-as-code folder as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: deploy-as-code.tar.gz 
+      - name: Download deploy-as-code folder from artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: .
+      - name: Extract deploy-as-code folder
+        run: tar -xzf deploy-as-code.tar.gz                
+      - name: Install AWS IAM Authenticator
+        run: |
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+          chmod +x ./aws-iam-authenticator
+          sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+          aws-iam-authenticator version  
+      - name: Generate kubeconfig
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
+          cat ~/.kube/config > kubeconfig  
+      - name: Generate kubeconfig
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
+          cat ~/.kube/config > kubeconfig 
+      - name: Verfiy kubectl get nodes
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          kubectl get nodes  
+        env:
+          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
+      - name: Verfiy kubectl get nodes
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          kubectl get nodes  
+        env:
+          AWS_ACCESS_KEY_ID:  ${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.UNIFIED_UAT_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.UNIFIED_UAT_REGION }} 
+
+      - name: Install Helmfile
+        run: |
+          HELMFILE_VERSION="v0.140.0"
+
+            # Download Helmfile
+          curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+
+            # Make the Helmfile binary executable
+          chmod +x helmfile
+
+            # Move Helmfile to a location in your PATH
+          sudo mv helmfile /usr/local/bin/helmfile
+
+          helm plugin install https://github.com/databus23/helm-diff
+
+            # Verify installation
+          helmfile --version        
+      - name: backbone-services deployment
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          helmfile -f digit-lts-backboneservices-helmfile.yaml apply --include-needs=true
+        working-directory: deploy-as-code/charts/backbone-services
+      - name: backbone-services deployment
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          helmfile -f unified-uat-backboneservices-helmfile.yaml apply --include-needs=true
+        working-directory: deploy-as-code/charts/backbone-services
+
+  CoreServices-Deployment:
+    needs: [check-core-services-changed-files]
+    if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment variables for digit-lts
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
+      - name: Set environment variables for unified-uat
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ secrets.UNIFIED_UAT_DEFAULT_REGION }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.UNIFIED_UAT_REGION }}" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name : check core-services
+        run: |
+          echo "${{ needs.check-core-services-changed-files.outputs.core-files-changed }}"
+      - name: Archive deploy-as-code folder
+        run: tar -czf deploy-as-code.tar.gz deploy-as-code/
+      - name: Upload deploy-as-code folder as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: deploy-as-code.tar.gz
+      - name: Download deploy-as-code folder from artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: deploy-as-code-artifact
+          path: .
+      - name: Extract deploy-as-code folder
+        run: tar -xzf deploy-as-code.tar.gz 
+      - name: Install dependencies
+        run: sudo apt-get install -y jq                 
+      - name: Install AWS IAM Authenticator
+        run: |
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+          chmod +x ./aws-iam-authenticator
+          sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+          aws-iam-authenticator version  
+      - name: Generate kubeconfig
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
+          cat ~/.kube/config > kubeconfig  
+      - name: Generate kubeconfig
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
+          cat ~/.kube/config > kubeconfig 
+      - name: Verfiy kubectl get nodes
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: |
+          kubectl get nodes  
+        env:
+          AWS_ACCESS_KEY_ID:  ${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
+      - name: Verfiy kubectl get nodes
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: |
+          kubectl get nodes  
+        env:
+          AWS_ACCESS_KEY_ID:  ${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ secrets.UNIFIED_UAT_DEFAULT_REGION }}
+          AWS_REGION:  ${{ secrets.UNIFIED_UAT_REGION }} 
+
+      - name: Install Helmfile
+        run: |
+          HELMFILE_VERSION="v0.140.0"
+
+            # Download Helmfile
+          curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+
+            # Make the Helmfile binary executable
+          chmod +x helmfile
+
+            # Move Helmfile to a location in your PATH
+          sudo mv helmfile /usr/local/bin/helmfile
+
+          helm plugin install https://github.com/databus23/helm-diff
+
+            # Verify installation
+          helmfile --version        
+      - name: core-services deployment
+        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        run: helmfile -f digit-lts-coreservices-helmfile.yaml apply --include-needs=true
+        working-directory: deploy-as-code/charts/core-services
+      - name: core-services deployment
+        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        run: helmfile -f unified-uat-coreservices-helmfile.yaml apply --include-needs=true
+        working-directory: deploy-as-code/charts/core-services
+                   
