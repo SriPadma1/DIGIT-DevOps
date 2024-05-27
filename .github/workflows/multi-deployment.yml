@@ -15,6 +15,7 @@ on:
           - unified-uat
 jobs:
   check-core-services-changed-files:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       core-files-changed: ${{ steps.check-coreservices-files.outputs.any_changed }}
@@ -39,6 +40,7 @@ jobs:
         done
     
   check-backbone-services-changed-files:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       backbone-files-changed: ${{ steps.check_backboneservices_files.outputs.any_changed }}
