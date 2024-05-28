@@ -1,9 +1,6 @@
 name: MultiDeployment workflow
 # Workflow branch creating cluster against the input.yaml file  
-on:
-  push:
-    branches:
-      - 'DIGIT-2.9LTS'   
+on:  
   workflow_dispatch:
     inputs:
       Environment:
@@ -13,6 +10,9 @@ on:
         options:
           - digit-lts
           - unified-uat
+  push:
+    branches:
+      - 'DIGIT-2.9LTS' 
 jobs:
   check-core-services-changed-files:
     if: ${{ github.event_name == 'workflow_dispatch' }}
