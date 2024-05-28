@@ -25,7 +25,7 @@ jobs:
     
     - name: Check for changes in core-services folder
       id: check-coreservices-files
-      uses: tj-actions/changed-files@v42
+      uses: tj-actions/changed-files@v42 
       with:
         files: |
           deploy-as-code/charts/core-services/**
