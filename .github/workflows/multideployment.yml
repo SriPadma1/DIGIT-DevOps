@@ -115,7 +115,7 @@ jobs:
       - name: Generate kubeconfig
         if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
+          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
         if: ${{ github.event.inputs.Environment == 'digit-lts' }}
@@ -218,7 +218,7 @@ jobs:
       - name: Generate kubeconfig
         if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
+          aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
         if: ${{ github.event.inputs.Environment == 'digit-lts' }}
