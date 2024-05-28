@@ -14,6 +14,37 @@ on:
     branches:
       - 'DIGIT-2.9LTS' 
 jobs:
+  check-team-membership:
+    runs-on: ubuntu-latest
+    outputs:
+      digit_lts_member: ${{ steps.digit-lts.outputs.digit_lts_member }}
+      unified_uat_member: ${{ steps.unified-uat.outputs.unified_uat_member }}
+    steps:
+      - name: Check if user is a member of digit-lts
+        id: digit-lts
+        run: |
+          USERNAME=${{ github.actor }}
+          TEAM1_MEMBERS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/Sripadma1/teams/digit-lts/members | jq -r '.[].login')
+          if echo "$TEAM1_MEMBERS" | grep -q "$USERNAME"; then
+            echo "digit_lts_member=true" >> $GITHUB_ENV
+            echo "::set-output name=digit_lts_member::true"
+          else
+            echo "digit_lts_member=false" >> $GITHUB_ENV
+            echo "::set-output name=digit_lts_member::false"
+          fi
+
+      - name: Check if user is a member of unified-uat
+        id: unified-uat
+        run: |
+          USERNAME=${{ github.actor }}
+          TEAM2_MEMBERS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/SriPadma1/teams/unified-uat/members | jq -r '.[].login')
+          if echo "$TEAM2_MEMBERS" | grep -q "$USERNAME"; then
+            echo "unified_uat_member=true" >> $GITHUB_ENV
+            echo "::set-output name=unified_uat_member::true"
+          else
+            echo "unified_uat_member=false" >> $GITHUB_ENV
+            echo "::set-output name=unified_uat_member::false"
+          fi
   check-core-services-changed-files:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
@@ -67,19 +98,19 @@ jobs:
              
 
   BackboneServices-Deployment:
-    needs: [check-backbone-services-changed-files]
+    needs: [check-team-membership, check-backbone-services-changed-files]
     if: ${{ needs.check-backbone-services-changed-files.outputs.backbone-files-changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variables for digit-lts
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
       - name: Set environment variables for unified-uat
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
@@ -108,17 +139,17 @@ jobs:
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           kubectl get nodes  
         env:
@@ -127,7 +158,7 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
           AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           kubectl get nodes  
         env:
@@ -154,30 +185,30 @@ jobs:
             # Verify installation
           helmfile --version        
       - name: backbone-services deployment
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           helmfile -f digit-lts-backboneservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
       - name: backbone-services deployment
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           helmfile -f unified-uat-backboneservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
 
   CoreServices-Deployment:
-    needs: [check-core-services-changed-files]
+    needs: [check-team-membership, check-core-services-changed-files]
     if: ${{ needs.check-core-services-changed-files.outputs.core-files-changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variables for digit-lts
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
       - name: Set environment variables for unified-uat
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
@@ -211,17 +242,17 @@ jobs:
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: |
           kubectl get nodes  
         env:
@@ -230,7 +261,7 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
           AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: |
           kubectl get nodes  
         env:
@@ -257,11 +288,11 @@ jobs:
             # Verify installation
           helmfile --version        
       - name: core-services deployment
-        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
+        if: ${{ needs.check-team-membership.outputs.digit_lts_member == 'true' && github.event.inputs.Environment == 'digit-lts' }}
         run: helmfile -f digit-lts-coreservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/core-services
       - name: core-services deployment
-        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
+        if: ${{ needs.check-team-membership.outputs.unified_uat_member == 'true' && github.event.inputs.Environment == 'unified-uat' }}
         run: helmfile -f unified-uat-coreservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/core-services
                    
