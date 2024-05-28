@@ -3,17 +3,7 @@ name: MultiDeployment workflow
 on:
   push:
     branches:
-      - 'DIGIT-2.9LTS' 
-      - 'master'  
-  workflow_dispatch:
-    inputs:
-      Environment:
-        description: 'Select the Environment you want to deploy'
-        required: true
-        type: choice
-        options:
-          - digit-lts
-          - unified-uat
+      - 'DIGIT-2.9LTS'  
 jobs:
   check-core-services-changed-files:
     if: ${{ github.event_name == 'workflow_dispatch' }}
