@@ -1,7 +1,7 @@
 # Common Labels
 labels:
   app: "digit-ui"
-  group: "web"
+  group: "web" 
 
 # Ingress Configs
 ingress:
