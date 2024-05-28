@@ -2,7 +2,7 @@
 labels:
   app: "audit-service"
   group: "rainmaker"
-
+ 
 # Ingress Configs
 ingress:
   enabled: true

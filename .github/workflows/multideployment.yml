@@ -72,14 +72,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variables for digit-lts
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
       - name: Set environment variables for unified-uat
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
@@ -108,17 +108,17 @@ jobs:
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           kubectl get nodes  
         env:
@@ -127,7 +127,7 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
           AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           kubectl get nodes  
         env:
@@ -154,12 +154,12 @@ jobs:
             # Verify installation
           helmfile --version        
       - name: backbone-services deployment
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           helmfile -f digit-lts-backboneservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
       - name: backbone-services deployment
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           helmfile -f unified-uat-backboneservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/backbone-services
@@ -170,14 +170,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variables for digit-lts
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.DIGIT_LTS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.DIGIT_LTS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ secrets.DIGIT_LTS_DEFAULT_REGION }}" >> $GITHUB_ENV
           echo "AWS_REGION=${{ secrets.DIGIT_LTS_REGION }}" >> $GITHUB_ENV
       - name: Set environment variables for unified-uat
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.UNIFIED_UAT_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.UNIFIED_UAT_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
@@ -211,17 +211,17 @@ jobs:
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.DIGIT_LTS_REGION }} --name digit-lts
           cat ~/.kube/config > kubeconfig  
       - name: Generate kubeconfig
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           aws eks update-kubeconfig --region ${{ secrets.UNIFIED_UAT_LTS_REGION }} --name unified-uat
           cat ~/.kube/config > kubeconfig 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: |
           kubectl get nodes  
         env:
@@ -230,7 +230,7 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ secrets.DIGIT_LTS_DEFAULT_REGION }}
           AWS_REGION:  ${{ secrets.DIGIT_LTS_REGION }} 
       - name: Verfiy kubectl get nodes
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: |
           kubectl get nodes  
         env:
@@ -257,11 +257,11 @@ jobs:
             # Verify installation
           helmfile --version        
       - name: core-services deployment
-        if: ${{ github.event.inputs.folder == 'digit-lts' }}
+        if: ${{ github.event.inputs.Environment == 'digit-lts' }}
         run: helmfile -f digit-lts-coreservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/core-services
       - name: core-services deployment
-        if: ${{ github.event.inputs.folder == 'unified-uat' }}
+        if: ${{ github.event.inputs.Environment == 'unified-uat' }}
         run: helmfile -f unified-uat-coreservices-helmfile.yaml apply --include-needs=true
         working-directory: deploy-as-code/charts/core-services
                    
