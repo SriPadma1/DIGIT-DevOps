@@ -32,7 +32,7 @@ jobs:
             echo "digit_lts_member=false" >> $GITHUB_ENV
             echo "::set-output name=digit_lts_member::false"
           fi
-          echo "${{ env.digit_lts_member }}"
+          echo ${{ env.digit_lts_member }}
 
       - name: Check if user is a member of unified-uat
         id: unified-uat
@@ -46,7 +46,7 @@ jobs:
             echo "unified_uat_member=false" >> $GITHUB_ENV
             echo "::set-output name=unified_uat_member::false"
           fi
-          echo "${{ env.unified_uat_member }}"
+          echo ${{ env.unified_uat_member }}
   check-core-services-changed-files:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
