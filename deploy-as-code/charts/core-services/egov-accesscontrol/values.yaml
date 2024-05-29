@@ -1,5 +1,5 @@
 # Common Labels
-labels: 
+labels:  
   app: "egov-accesscontrol"        
   group: "core"     
 
