@@ -24,7 +24,10 @@ jobs:
         id: digit-lts
         run: |
           USERNAME=${{ github.actor }}
-          TEAM1_MEMBERS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://github.com/orgs/Sripadma1/teams/digit-lts/members | jq -r '.[].login')
+          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/SriPadma1/teams/digit-lts/members)
+          echo "API response for digit-lts: $RESPONSE"
+          TEAM1_MEMBERS=$(echo "$RESPONSE" | jq -r '.[].login')
+          echo "TEAM1_MEMBERS: $TEAM1_MEMBERS"
           if echo "$TEAM1_MEMBERS" | grep -q "$USERNAME"; then
             echo "digit_lts_member=true" >> $GITHUB_ENV
             echo "::set-output name=digit_lts_member::true"
@@ -32,7 +35,6 @@ jobs:
             echo "digit_lts_member=false" >> $GITHUB_ENV
             echo "::set-output name=digit_lts_member::false"
           fi
-          echo $digit_lts_member
       - name: Print digit-lts membership
         run: echo "digit_lts_member = ${{ env.digit_lts_member }}"
 
@@ -48,8 +50,6 @@ jobs:
             echo "unified_uat_member=false" >> $GITHUB_ENV
             echo "::set-output name=unified_uat_member::false"
           fi
-          echo $unified_uat_member
-
       - name: Print unified-uat membership
         run: echo "unified_uat_member = ${{ env.unified_uat_member }}"
   check-core-services-changed-files:
