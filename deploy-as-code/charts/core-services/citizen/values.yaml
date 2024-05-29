@@ -1,6 +1,6 @@
 # Common Labels
 labels:
-  app: "citizen"
+  app: "citizen" 
   group: "web"
 
 # Ingress Configs
