@@ -12,7 +12,7 @@ on:
           - unified-uat
   push:
     branches:
-      - 'DIGIT-2.9LTS' 
+      - 'DIGIT-2.9LTS'  
 jobs:
   check-team-membership:
     runs-on: ubuntu-latest
@@ -25,7 +25,6 @@ jobs:
         run: |
           USERNAME=${{ github.actor }}
           RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/SriPadma1/teams/digit-lts/members)
-          echo "API response for digit-lts: $RESPONSE"
           TEAM1_MEMBERS=$(echo "$RESPONSE" | jq -r '.[].login')
           echo "TEAM1_MEMBERS: $TEAM1_MEMBERS"
           if echo "$TEAM1_MEMBERS" | grep -q "$USERNAME"; then
@@ -42,8 +41,10 @@ jobs:
         id: unified-uat
         run: |
           USERNAME=${{ github.actor }}
-          TEAM2_MEMBERS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://github.com/orgs/SriPadma1/teams/unified-uat/members | jq -r '.[].login')
-          if echo "$TEAM2_MEMBERS" | grep -q "$USERNAME"; then
+          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/SriPadma1/teams/unified-uat/members)
+          TEAM2_MEMBERS=$(echo "$RESPONSE" | jq -r '.[].login')
+          echo "TEAM1_MEMBERS: $TEAM1_MEMBERS"
+          if echo "$TEAM1_MEMBERS" | grep -q "$USERNAME"; then
             echo "unified_uat_member=true" >> $GITHUB_ENV
             echo "::set-output name=unified_uat_member::true"
           else
