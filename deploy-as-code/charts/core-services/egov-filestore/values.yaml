@@ -24,7 +24,7 @@ image:
 replicas: "1"
 healthChecks:
   enabled: true
-  livenessProbePath: "/filestore/health"
+  livenessProbePath: "/filestore/health" 
   readinessProbePath: "/filestore/health"
 appType: "java-spring"
 tracing-enabled: true
