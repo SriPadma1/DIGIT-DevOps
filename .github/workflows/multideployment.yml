@@ -43,8 +43,8 @@ jobs:
           USERNAME=${{ github.actor }}
           RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/orgs/SriPadma1/teams/unified-uat/members)
           TEAM2_MEMBERS=$(echo "$RESPONSE" | jq -r '.[].login')
-          echo "TEAM2_MEMBERS: $TEAM1_MEMBERS"
-          if echo "$TEAM1_MEMBERS" | grep -q "$USERNAME"; then
+          echo "TEAM2_MEMBERS: $TEAM2_MEMBERS"
+          if echo "$TEAM2_MEMBERS" | grep -q "$USERNAME"; then
             echo "unified_uat_member=true" >> $GITHUB_ENV
             echo "::set-output name=unified_uat_member::true"
           else
