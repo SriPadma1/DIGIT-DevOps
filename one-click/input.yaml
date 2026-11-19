@@ -14,15 +14,15 @@
 # It becomes the AKS cluster name, the resource group <environment>-rg and the files
 # one-click/<environment>.yaml / <environment>-secrets.yaml. Fixed after the first install.
 # Example: "team-a-digit"
-environment: "<environment>"
+environment: "one-click-azure-test"
 
 # The web address people open (no https://, no /). You must own it.
 # Example: "digit.example.com"
-domain: "<domain>"
+domain: "one-click.digit.org"
 
 # Your e-mail, for the free HTTPS certificates (Let's Encrypt).
 # Example: "you@example.com"
-email: "<email>"
+email: "sri.padma@egovernments.org"
 
 # ---- OPTIONAL (keep as is if not sure) -----------------------------------------------
 
@@ -33,11 +33,11 @@ location: "centralindia"
 #   "false" = the workflow deploys with helmfile
 #   "true"  = the workflow installs Argo CD; Argo CD deploys every service from this
 #             repository and keeps it in sync. Screen: https://<domain>/argocd (user admin)
-argocd_enabled: "false"
+argocd_enabled: "true"
 
 # Terraform variables: terraform_<name> -> variable <name> in
 # infra-as-code/terraform/azure/variables.tf
-terraform_node_count: "4"
+terraform_node_count: "3"
 # "true" scales the worker nodes to 0 at night and back up in the morning (Azure Automation).
 terraform_scheduling: "false"
 # PostgreSQL Flexible Server size. General Purpose: offered in most regions. (The Terraform
@@ -48,7 +48,7 @@ terraform_db_sku_name: "GP_Standard_D2ds_v5"
 terraform_db_version: "18"
 # Extensions DIGIT services create (Azure only allows listed ones).
 terraform_db_extensions: "BTREE_GIST,PG_TRGM,PGCRYPTO,POSTGIS,UUID-OSSP"
-# terraform_main_vm_size: "Standard_D8s_v3"
+terraform_main_vm_size: "Standard_D4as_v5"
 
 # The helmfiles that deploy DIGIT (egovernments/helm-charts, helmfile/digit3-one-click).
 # Pin helmfiles_ref to a tag or a FULL 40-character commit SHA for a reproducible
